@@ -1,0 +1,16 @@
+{
+  "name": "Example Journey",
+  "appName": "Example Travel OS",
+  "travelerName": "Traveler",
+  "startDate": "2027-04-02",
+  "endDate": "2027-04-04",
+  "currency": "USD",
+  "budget": 500,
+  "language": "en-US",
+  "cities": [
+    { "name": "Example City", "country": "Exampleland", "code": "", "lat": 0, "lng": 0 }
+  ],
+  "itinerary": [
+    { "date": "2027-04-02", "time": "09:30", "city": "Example City", "title": "User-supplied stop", "location": "User-supplied location", "category": "Experience" }
+  ]
+}

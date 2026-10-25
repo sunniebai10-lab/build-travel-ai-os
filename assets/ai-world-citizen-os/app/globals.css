@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+:root {
+  /* AI World Citizen OS Design System V1.0 */
+  --color-background-warm: #f8f5ef;
+  --color-text-primary: #1c1c1c;
+  --color-text-secondary: #7a746c;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1eadf;
+  --color-border-soft: #e9dfd2;
+  --color-accent-orange: #e88a4a;
+  --color-ai-gold: #d7b56d;
+  --color-ocean-blue: #486a7a;
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+
+  --radius-small: 12px;
+  --radius-medium: 20px;
+  --radius-large: 24px;
+
+  --type-display-size: 40px;
+  --type-display-line: 40px;
+  --type-heading-size: 32px;
+  --type-heading-line: 38px;
+  --type-section-size: 20px;
+  --type-section-line: 28px;
+  --type-card-title-size: 16px;
+  --type-card-title-line: 22px;
+  --type-body-size: 14px;
+  --type-body-line: 22px;
+  --type-caption-size: 12px;
+  --type-caption-line: 19px;
+  --type-nav-label-size: 10px;
+  --type-nav-label-line: 12px;
+
+  --shadow-soft-card: 0 12px 32px rgba(83, 58, 36, 0.07);
+  --shadow-hero: 0 22px 50px rgba(83, 58, 36, 0.12);
+  --shadow-bottom-bar: 0 -10px 24px rgba(83, 58, 36, 0.06);
+
+  --background: #f8f5ef;
+  --foreground: #1c1c1c;
+  --card: #ffffff;
+  --card-foreground: #1c1c1c;
+  --muted: #f1eadf;
+  --muted-foreground: #7a746c;
+  --border: #e9dfd2;
+  --accent: #e88a4a;
+  --accent-foreground: #ffffff;
+  --ring: #e88a4a;
+  --ocean: #486a7a;
+  --gold: #d7b56d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(232, 138, 74, 0.11), transparent 32rem),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.86), rgba(248, 245, 239, 0.95)),
+    var(--background);
+  color: var(--foreground);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+@media (max-width: 380px) {
+  :root {
+    --type-display-size: 36px;
+    --type-display-line: 36px;
+    --type-heading-size: 28px;
+    --type-heading-line: 34px;
+    --type-section-size: 19px;
+    --type-section-line: 26px;
+  }
+}
+
+.mapboxgl-control-container {
+  display: none;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ring: var(--ring);
+  --color-ocean: var(--ocean);
+  --color-gold: var(--gold);
+  --color-background-warm: var(--color-background-warm);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-border-soft: var(--color-border-soft);
+  --color-accent-orange: var(--color-accent-orange);
+  --color-ai-gold: var(--color-ai-gold);
+  --color-ocean-blue: var(--color-ocean-blue);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-serif: "Lora", "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --font-mono: "SF Mono", "Roboto Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+}

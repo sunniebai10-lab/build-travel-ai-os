@@ -1,0 +1,13 @@
+{
+  "name": "My Journey",
+  "appName": "Travel OS",
+  "tripId": "00000000-0000-4000-8000-000000000001",
+  "travelerName": "Traveler",
+  "startDate": "2027-01-01",
+  "endDate": "2027-01-07",
+  "currency": "USD",
+  "budget": 0,
+  "language": "zh-CN",
+  "cities": [{ "name": "未设置目的地", "country": "未设置国家", "code": "", "lat": 0, "lng": 0 }],
+  "itinerary": []
+}
