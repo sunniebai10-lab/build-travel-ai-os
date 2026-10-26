@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen, ChevronRight, Compass, MapPin, Plus, Search, Spark
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityDetailClient } from "@/components/activity-detail-client";
+import { LocalDataBackup } from "@/components/local-data-backup";
 import { AuthSyncStatus } from "@/components/auth-sync-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -650,6 +651,7 @@ export function WalletPanel({ trip, expenses }: { trip: TripView; expenses: Expe
           )}
         </CardContent>
       </MobileCard>
+      <LocalDataBackup />
     </div>
   );
 }
@@ -717,6 +719,7 @@ export function JournalPanel() {
           </CardContent>
         </MobileCard>
       )}
+      <LocalDataBackup />
     </div>
   );
 }

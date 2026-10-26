@@ -39,8 +39,11 @@ The script rejects an existing target. It does not deploy, authenticate a user, 
 
 ## Actual capability boundary
 
+The [2026-10-26 acceptance record](references/acceptance-2026-10-26.md) documents one independent Skill invocation, subsequent browser checks, repairs, and limits. This is a tested local-use workflow, not proof that every user request, cloud integration, or device works automatically.
+
 - The copied app includes Today, Route, AI Guide, Journal, Wallet, activity detail, Trip Memory, and PWA/offline infrastructure. The generator sets trip dates, cities, budget, currency, HTML language and initial itinerary. Module removal and translation of visible copy are Codex code-adaptation steps, not automatic config switches.
-- Without Supabase, itinerary additions and journal/expense entries use local browser storage. Data stays on that browser and is not a cloud backup. Clearing site data or using another device loses it. Export/import is not yet bundled.
+- Without Supabase, itinerary additions and journal/expense entries use local browser storage. Data stays on that browser and is not a cloud backup. Clearing site data or using another device loses it unless you first download a backup. Journal and Wallet expose local export/import for the current trip; the JSON file must be stored privately. It does not include cloud data or offline sync queues.
+- The bundled Today UI creates spontaneous itinerary items but does not yet expose edit/delete controls. When those are requested, Codex must implement and verify them in the generated project; the Skill does not claim they are already built in.
 - AI responses without a configured provider are marked unconfigured. Live destination facts require a provider and independent checking. The app does not verify opening hours, bookings, transport or prices.
 - The PWA has a generic offline launch shell. That shell is not a cached personal itinerary. The original signed-in offline queues require a configured Supabase account.
 - Real cloud mode needs your own Supabase project, schema/migrations and RLS review, Auth configuration, and `.env.local`; see `references/services.md`. Do not use the included SQL without reviewing it against your project.

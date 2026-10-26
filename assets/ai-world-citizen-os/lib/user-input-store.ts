@@ -36,6 +36,8 @@ const expenseKey = `ai-world-citizen:${tripScope}:user-expenses`;
 const journalKey = `ai-world-citizen:${tripScope}:user-journals`;
 const activityKey = `ai-world-citizen:${tripScope}:activity-status`;
 
+export const localTravelStorageKeys = { expenseKey, journalKey, activityKey };
+
 export function isValidCalendarDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T12:00:00Z`);

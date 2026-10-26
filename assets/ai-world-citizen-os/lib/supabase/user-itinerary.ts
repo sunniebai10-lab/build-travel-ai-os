@@ -87,6 +87,7 @@ export interface UserItineraryQueueSyncResult {
 
 const queueKey = "aiwc_user_itinerary_queue_v1";
 const personalCacheKey = "aiwc_user_itinerary_local_v1";
+export const localGuestItineraryCacheKey = personalCacheKey;
 const baselineCacheKey = "aiwc_public_itinerary_baseline_v1";
 const localGuestId = "local-guest";
 
