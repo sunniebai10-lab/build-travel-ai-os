@@ -820,6 +820,19 @@ export async function restorePlannedItinerary(sourceItineraryId: string, tripId:
 }
 
 export async function updateUserItinerary(id: string, tripId: string, input: UserItineraryUpdateInput): Promise<UserItineraryWriteResult> {
+  if (!supabase) {
+    try {
+      const existing = getCachedUserItinerary(localGuestId, tripId).find((item) => item.id === id && item.source === "spontaneous");
+      if (!existing) return { data: null, source: "none", queued: false, error: "Itinerary was not found." };
+      validateCategory(input.category);
+      validateRequired({ ...existing, ...input });
+      const saved = { ...existing, ...input, updatedAt: now() };
+      upsertCachedUserItinerary(saved);
+      return { data: saved, source: "local", queued: false };
+    } catch (error) {
+      return { data: null, source: "none", queued: false, error: errorMessage(error) };
+    }
+  }
   const auth = await getAuthenticatedUser();
   if (!auth.user) return { data: null, source: "none", queued: false, error: auth.error ?? "User is not signed in." };
 
@@ -858,6 +871,19 @@ export async function updateUserItinerary(id: string, tripId: string, input: Use
     enqueue({ userId: auth.user.id, tripId, operation: "update", entityId: id, payload: local });
     upsertCachedUserItinerary(local);
     return { data: local, source: "local", queued: true, error: failure.message };
+  }
+}
+
+export async function removeSpontaneousItinerary(id: string, tripId: string): Promise<UserItineraryWriteResult> {
+  if (supabase) return cancelUserItinerary(id, tripId);
+  try {
+    const records = getCachedUserItinerary(localGuestId, tripId);
+    const existing = records.find((item) => item.id === id && item.source === "spontaneous");
+    if (!existing) return { data: null, source: "none", queued: false, error: "Itinerary was not found." };
+    cacheUserItineraryRecords(localGuestId, tripId, records.filter((item) => item.id !== id));
+    return { data: existing, source: "local", queued: false };
+  } catch (error) {
+    return { data: null, source: "none", queued: false, error: errorMessage(error) };
   }
 }
 

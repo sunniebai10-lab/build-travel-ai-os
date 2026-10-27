@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, BookOpen, ChevronRight, Compass, MapPin, Plus, Search, Sparkles, X } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronRight, Compass, MapPin, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityDetailClient } from "@/components/activity-detail-client";
@@ -32,7 +32,7 @@ import type { DailyPlanView, TimelineItemView } from "@/lib/supabase/itinerary";
 import { getJournalEntries, type JournalEntryView } from "@/lib/supabase/journal";
 import type { TripView } from "@/lib/supabase/trips";
 import { getEffectiveItinerary, type EffectiveItineraryItem } from "@/lib/supabase/effective-itinerary";
-import { createSpontaneousItinerary, itineraryCategories, type ItineraryCategory, type UserItineraryWriteResult } from "@/lib/supabase/user-itinerary";
+import { createSpontaneousItinerary, itineraryCategories, removeSpontaneousItinerary, updateUserItinerary, type ItineraryCategory, type UserItineraryWriteResult } from "@/lib/supabase/user-itinerary";
 import { calendarDateAtLocalNoon, getRouteTravelStatuses, getTravelDateContext, matchesTravelDate } from "@/lib/travel-date-context";
 import { getUserExpenses, type UserExpenseInput } from "@/lib/user-input-store";
 import { getTravelImageForLocation } from "@/lib/travel-images";
@@ -199,6 +199,7 @@ function AddJourneySheet({
   trip,
   date,
   city,
+  editing,
   onClose,
   onSaved,
 }: {
@@ -206,14 +207,16 @@ function AddJourneySheet({
   trip: TripView;
   date: string;
   city: string;
+  editing: EffectiveItineraryItem | null;
   onClose: () => void;
   onSaved: (result: UserItineraryWriteResult) => void;
 }) {
-  const [time, setTime] = useState("");
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState<ItineraryCategory>("Experience");
-  const [note, setNote] = useState("");
+  const [selectedDate, setSelectedDate] = useState(editing?.date ?? date);
+  const [selectedCity, setSelectedCity] = useState(editing?.city ?? city);
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [location, setLocation] = useState(editing?.location ?? "");
+  const [category, setCategory] = useState<ItineraryCategory>(editing?.category ?? "Experience");
+  const [note, setNote] = useState(editing?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -221,23 +224,30 @@ function AddJourneySheet({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submittedTime = String(new FormData(event.currentTarget).get("time") ?? "");
     if (!title.trim()) {
       setError("请先填写这一段行程。");
+      return;
+    }
+    if (!selectedCity.trim() || selectedDate < trip.startDate || selectedDate > trip.endDate) {
+      setError("请填写旅程日期内的日期和城市。");
       return;
     }
 
     setError(null);
     setIsSaving(true);
-    const result = await createSpontaneousItinerary({
-      tripId: trip.id,
-      date,
-      time: time || null,
-      city,
-      title,
+    const input = {
+      date: selectedDate,
+      time: submittedTime || null,
+      city: selectedCity.trim(),
+      title: title.trim(),
       location,
       category,
       note,
-    });
+    };
+    const result = editing?.userItineraryId
+      ? await updateUserItinerary(editing.userItineraryId, trip.id, input)
+      : await createSpontaneousItinerary({ ...input, tripId: trip.id });
     setIsSaving(false);
 
     if (!result.data) {
@@ -253,22 +263,17 @@ function AddJourneySheet({
     }
 
     onSaved(result);
-    setTime("");
-    setTitle("");
-    setLocation("");
-    setCategory("Experience");
-    setNote("");
     onClose();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-[rgba(28,28,28,0.24)] p-4 pt-12" role="dialog" aria-modal="true" aria-label="添加行程">
+    <div className="fixed inset-0 z-50 flex items-end bg-[rgba(28,28,28,0.24)] p-4 pt-12" role="dialog" aria-modal="true" aria-label={editing ? "编辑行程" : "添加行程"}>
       <form onSubmit={handleSubmit} className="max-h-full w-full overflow-y-auto rounded-[var(--radius-large)] bg-background-warm p-5 pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_24px_56px_rgba(28,28,28,0.22)]">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-orange">Today</div>
-            <h3 className="mt-1 text-xl font-semibold text-text-primary">添加行程</h3>
-            <p className="mt-1 text-sm leading-[1.6] text-text-secondary">{city} · {date}</p>
+            <h3 className="mt-1 text-xl font-semibold text-text-primary">{editing ? "编辑行程" : "添加行程"}</h3>
+            <p className="mt-1 text-sm leading-[1.6] text-text-secondary">{selectedCity} · {selectedDate}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="关闭添加行程" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-text-primary">
             <X className="h-5 w-5" strokeWidth={1.8} />
@@ -277,12 +282,20 @@ function AddJourneySheet({
 
         <div className="space-y-4">
           <label className="block">
+            <span className="mb-2 block text-sm font-medium text-text-primary">日期</span>
+            <input type="date" min={trip.startDate} max={trip.endDate} value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-text-primary">城市</span>
+            <input value={selectedCity} onChange={(event) => setSelectedCity(event.target.value)} className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" />
+          </label>
+          <label className="block">
             <span className="mb-2 block text-sm font-medium text-text-primary">时间</span>
-            <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" />
+            <input name="time" type="time" defaultValue={editing?.time?.slice(0, 5) ?? ""} className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-text-primary">行程</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="逛加拉塔街区" className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" autoFocus />
+            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="填写自己的行程" className="h-12 w-full rounded-[var(--radius-small)] border border-border-soft bg-white px-4 text-base text-text-primary outline-none focus:border-accent-orange" autoFocus />
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-text-primary">地点</span>
@@ -303,7 +316,7 @@ function AddJourneySheet({
         {error ? <p className="mt-4 rounded-[var(--radius-small)] bg-[color:rgba(232,138,74,0.1)] px-3 py-2 text-sm leading-[1.5] text-text-primary">{error}</p> : null}
         <Button type="submit" disabled={isSaving} className="mt-5 h-12 w-full rounded-[var(--radius-small)]">
           <Plus className="h-4 w-4" />
-          {isSaving ? "正在添加..." : "添加到今日旅程"}
+          {isSaving ? "正在保存..." : editing ? "保存修改" : "添加到今日旅程"}
         </Button>
       </form>
     </div>
@@ -328,11 +341,33 @@ function DailyTimeline({
   onOpenActivity: (activity: EffectiveItineraryItem) => void;
 }) {
   const [isComposerOpen, setComposerOpen] = useState(false);
+  const [editing, setEditing] = useState<EffectiveItineraryItem | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<EffectiveItineraryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
   async function handleSaved(result: UserItineraryWriteResult) {
-    setSyncNotice(result.queued ? "已加入今日旅程，网络恢复后会自动同步。" : "已加入今日旅程。");
+    setSyncNotice(result.queued ? "已保存到本机，网络恢复后会自动同步。" : "行程已保存。");
     await onRefresh();
+  }
+
+  async function handleDelete() {
+    if (!pendingDelete?.userItineraryId) return;
+    setIsDeleting(true);
+    try {
+      const result = await removeSpontaneousItinerary(pendingDelete.userItineraryId, trip.id);
+      if (!result.data) {
+        setSyncNotice("暂时无法删除行程，请稍后重试。");
+        return;
+      }
+      setPendingDelete(null);
+      setSyncNotice(result.queued ? "已从行程移除，网络恢复后会同步。" : "行程已删除。");
+      await onRefresh();
+    } catch {
+      setSyncNotice("暂时无法删除行程，请稍后重试。");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -365,14 +400,25 @@ function DailyTimeline({
             );
 
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onOpenActivity(item)}
-                className="block w-full rounded-[var(--radius-small)] text-left transition active:translate-y-px"
-              >
-                {row}
-              </button>
+              <div key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpenActivity(item)}
+                  className="block w-full rounded-[var(--radius-small)] text-left transition active:translate-y-px"
+                >
+                  {row}
+                </button>
+                {item.source === "spontaneous" && item.userItineraryId ? (
+                  <div className="flex justify-end gap-2 border-b border-border-soft pb-2">
+                    <button type="button" onClick={() => { setEditing(item); setComposerOpen(true); }} aria-label={`编辑行程：${item.title}`} className="flex min-h-11 items-center gap-1 px-3 text-sm text-text-secondary">
+                      <Pencil className="h-4 w-4" aria-hidden="true" />编辑
+                    </button>
+                    <button type="button" onClick={() => setPendingDelete(item)} aria-label={`删除行程：${item.title}`} className="flex min-h-11 items-center gap-1 px-3 text-sm text-text-secondary">
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />删除
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             );
           }) : null}
           {!isLoading && !items.length ? (
@@ -386,7 +432,16 @@ function DailyTimeline({
           ) : null}
         </CardContent>
       </MobileCard>
-      <AddJourneySheet open={isComposerOpen} trip={trip} date={date} city={city} onClose={() => setComposerOpen(false)} onSaved={handleSaved} />
+      {pendingDelete ? (
+        <div role="group" aria-label="确认删除行程" className="rounded-[var(--radius-small)] border border-border-soft bg-white p-4 text-sm text-text-primary">
+          <p>删除“{pendingDelete.title}”？{pendingDelete.source === "spontaneous" ? "此操作会从当前旅程移除这条个人行程。" : null}</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" disabled={isDeleting} onClick={() => void handleDelete()} className="min-h-11 rounded-[var(--radius-small)] bg-text-primary px-4 text-white disabled:opacity-50">确认删除</button>
+            <button type="button" disabled={isDeleting} onClick={() => setPendingDelete(null)} className="min-h-11 rounded-[var(--radius-small)] border border-border px-4">取消</button>
+          </div>
+        </div>
+      ) : null}
+      {isComposerOpen ? <AddJourneySheet open trip={trip} date={date} city={city} editing={editing} onClose={() => { setComposerOpen(false); setEditing(null); }} onSaved={handleSaved} /> : null}
     </>
   );
 }
@@ -942,6 +997,7 @@ export function MobileTravelOS({ trip, countries, routeCities, timeline, dailyPl
             detailTitle="注意事项"
             detail={currentCountry?.taboo?.[0] ? "进入宗教空间时保持安静与尊重，拍摄人物前先征求同意。" : undefined}
           />
+          <LocalDataBackup />
         </div>
       </MobileSection>
 
